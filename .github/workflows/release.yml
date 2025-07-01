@@ -1,25 +1,40 @@
 name: Release
-
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+env:
+  PROJECT_PATH: "net-example-api.csproj"
+  PACKAGE_OUTPUT_DIRECTORY: ${{ github.workspace }}/output
 
 jobs:
   release:
-    permissions:
-      contents: write
-      issues: write
-      pull-requests: write
+    name: Release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET Core SDK 9
+        uses: actions/setup-dotnet@v4
         with:
-          fetch-depth: 0
-          persist-credentials: false
-      - uses: actions/setup-node@v4
+          dotnet-version: 9.x
+      - name: Semantic Release
+        id: release
+        uses: cycjimmy/semantic-release-action@v3
         with:
-          node-version: 20
-      - run: npm ci
-      - run: npm run build
-      - run: npx semantic-release
+          working_directory: ./net-example-api
+          extra_plugins: |
+            @semantic-release/commit-analyzer
+            @semantic-release/release-notes-generator
+            @semantic-release/github
+            @semantic-release/git
+            @semantic-release/exec
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Pack & Publish project"
+        if: ${{ steps.release.outputs.new_release_version }}
+        run: |
+          dotnet clean
+          dotnet pack ${{ env.PROJECT_PATH }} --configuration Release --include-symbols --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
