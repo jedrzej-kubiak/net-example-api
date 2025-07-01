@@ -23,7 +23,7 @@ jobs:
         id: release
         uses: cycjimmy/semantic-release-action@v3
         with:
-          working_directory: ./net-example-api
+          working_directory: ./
           extra_plugins: |
             @semantic-release/commit-analyzer
             @semantic-release/release-notes-generator
