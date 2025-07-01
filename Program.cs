@@ -17,6 +17,8 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+Console.WriteLine("Connection String: " + builder.Configuration.GetConnectionString("DefaultConnection"));
+
 builder.Services.AddDbContext<NetExampleApiDbContext>((sp, options) =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
