@@ -21,7 +21,7 @@ jobs:
       - name: Set up .NET Core
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.x'
+          dotnet-version: "9.x"
 
       - name: Build with dotnet
         run: dotnet build --configuration Release
@@ -35,7 +35,8 @@ jobs:
           name: .net-app
           path: ${{env.DOTNET_ROOT}}/myapp
 
-  deploy:
+  deploy-dev:
+    name: Deploy to Development Environment
     runs-on: ubuntu-latest
     needs: build
     permissions:
@@ -47,7 +48,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: .net-app
-      
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -59,7 +60,65 @@ jobs:
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'prod-webapp-api-rg01'
-          slot-name: 'Production'
+          app-name: "prod-webapp-api-rg01"
+          slot-name: "Production"
           package: .
-          
+
+  deploy-test:
+    name: Deploy to Test Environment
+    runs-on: ubuntu-latest
+    needs: [build, deploy-dev]
+
+    permissions:
+      id-token: write #This is required for requesting the JWT
+      contents: read #This is required for actions/checkout
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: .net-app
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_C8C85ABE1ECC499BA7B1ACBB2953B1BE }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_1FE5440F385E4AA1A3BC87F11083DA11 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_EAB4A0382CA143F386B31FA1F3C4AB51 }}
+
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: "prod-webapp-api-rg01"
+          slot-name: "Production"
+          package: .
+
+  deploy-prod:
+    name: Deploy to Production Environment
+    runs-on: ubuntu-latest
+    needs: [build, deploy-test, deploy-dev]
+    permissions:
+      id-token: write #This is required for requesting the JWT
+      contents: read #This is required for actions/checkout
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: .net-app
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_C8C85ABE1ECC499BA7B1ACBB2953B1BE }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_1FE5440F385E4AA1A3BC87F11083DA11 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_EAB4A0382CA143F386B31FA1F3C4AB51 }}
+
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: "prod-webapp-api-rg01"
+          slot-name: "Production"
+          package: .
