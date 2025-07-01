@@ -1,4 +1,12 @@
 {
+  "scripts": {
+    "build": "node esbuild.cjs",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jedrzej-kubiak/net-example-api.git"
+  },
   "devDependencies": {
     "semantic-release": "^24.2.6"
   }
